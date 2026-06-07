@@ -50,7 +50,7 @@ spec:
       steps {
         dir('python-vault-lab') {
           sh '''
-            set +x
+            set -x
             JWT="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
             VAULT_TOKEN="$(vault write -field=token auth/kubernetes/login role=jenkins jwt="$JWT")"
             export VAULT_TOKEN
