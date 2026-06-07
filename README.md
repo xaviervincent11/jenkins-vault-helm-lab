@@ -14,6 +14,8 @@ Vault is installed in dev mode for learning only. It is insecure, uses the root 
 
 ## Architecture
 
+![Jenkins Vault Helm lab architecture](docs/lab-architecture.svg)
+
 ```text
 GitHub repository
    |
