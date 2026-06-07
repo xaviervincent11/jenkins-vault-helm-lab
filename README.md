@@ -226,7 +226,7 @@ kubectl exec --namespace jenkins svc/jenkins -c jenkins -- \
 10. Repository URL:
 
 ```text
-git@github.com:xaviervincent11/jenkins-vault-helm-lab.git
+https://github.com/xaviervincent11/jenkins-vault-helm-lab.git
 ```
 
 11. Branch specifier:
@@ -242,6 +242,8 @@ python-vault-lab/Jenkinsfile
 ```
 
 13. Save and run `Build Now`.
+
+Because this repository is public, HTTPS is the simplest Jenkins SCM URL. If you use the SSH URL instead, Jenkins must have both an SSH credential and a trusted GitHub host key configured; otherwise the build can fail with `Host key verification failed`.
 
 The pipeline should:
 
