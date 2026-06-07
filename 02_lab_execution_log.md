@@ -118,12 +118,96 @@ Note:
 
 ### 5. Install and Configure Jenkins
 
-Status: in progress.
+Status: completed.
+
+Commands executed:
+
+```bash
+helm repo add jenkins https://charts.jenkins.io
+helm repo update jenkins
+helm upgrade --install jenkins jenkins/jenkins --namespace jenkins --create-namespace --wait --timeout 10m
+kubectl get pods -n jenkins
+kubectl exec --namespace jenkins svc/jenkins -c jenkins -- /bin/cat /run/secrets/additional/chart-admin-password
+```
+
+Result:
+
+- Installed Jenkins release `jenkins` in namespace `jenkins`.
+- Jenkins chart version: `jenkins-5.9.22`.
+- Jenkins app version: `2.555.2`.
+- Jenkins pod `jenkins-0` is `Running` with `2/2` containers ready.
+- Jenkins services created:
+  - `jenkins` on port `8080`
+  - `jenkins-agent` on port `50000`
+- Retrieved the generated Jenkins admin password.
+
+Access:
+
+```bash
+kubectl -n jenkins port-forward svc/jenkins 8080:8080
+```
+
+Then open `http://127.0.0.1:8080` and sign in as `admin`.
 
 ### 6. Deploy and Validate the Application
 
-Status: pending.
+Status: completed.
+
+Commands executed:
+
+```bash
+kubectl apply -f k8s/jenkins-deployer-rbac.yaml
+kubectl -n jenkins create token jenkins
+kubectl -n vault exec vault-0 -- sh -c 'vault write -field=token auth/kubernetes/login role=jenkins jwt=...'
+helm upgrade --install python-app ./chart/python-app --namespace apps --create-namespace --set-string secrets.dbUser=... --set-string secrets.dbPassword=...
+kubectl -n apps rollout status deploy/python-app --timeout=120s
+kubectl -n apps run smoke-test --rm -i --restart=Never --image=python-vault-lab:v1 --image-pull-policy=IfNotPresent --command -- python -c 'import urllib.request; print(urllib.request.urlopen("http://python-app:8080/").read().decode())'
+kubectl get pods,svc,secrets -n apps
+```
+
+Result:
+
+- Created namespace `apps`.
+- Created Role `jenkins-deployer` in namespace `apps`.
+- Created RoleBinding `jenkins-deployer` binding service account `jenkins` in namespace `jenkins`.
+- Verified the Jenkins service account can authenticate to Vault through Kubernetes auth role `jenkins`.
+- Installed Helm release `python-app` in namespace `apps`.
+- Deployment `python-app` rolled out successfully.
+- Smoke test succeeded:
+
+```text
+DB_USER=admin
+DB_PASSWORD_PRESENT=yes
+```
+
+Final app namespace state:
+
+- Pod `python-app-64bfd89647-rcwhj` is `Running`.
+- Service `python-app` is available on cluster port `8080`.
+- Secret `python-app-secrets` exists with 2 keys.
 
 ### 7. Jenkins Pipeline
 
-Status: pending.
+Status: pending external Git repository / SCM setup.
+
+Current status:
+
+- `python-vault-lab/` is not configured with a Git remote.
+- The Jenkinsfile uses `checkout scm`, so Jenkins needs the project published to a reachable Git repository, or the job must be changed to use an inline/scripted source.
+- Cluster-side prerequisites for the pipeline are ready:
+  - Jenkins is installed and running.
+  - Vault is installed and configured.
+  - Vault Kubernetes auth accepts the `jenkins` service account.
+  - Jenkins has RBAC to deploy into namespace `apps`.
+  - Local images `python-vault-lab:v1` and `jenkins-ci-toolbox:v1` were loaded into kind earlier.
+  - Manual Helm deployment and in-cluster smoke test succeeded.
+
+Next step:
+
+```bash
+cd python-vault-lab
+git remote add origin git@github.com:<your-user>/python-vault-lab.git
+git push -u origin main
+```
+
+Then create a Jenkins Pipeline job using `Pipeline script from SCM`, repository URL `<your GitHub repository URL>`, branch `*/main`, and script path `Jenkinsfile`.
