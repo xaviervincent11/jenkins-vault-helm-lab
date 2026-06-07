@@ -75,11 +75,13 @@ DB_PASSWORD_PRESENT=yes
 
 ## Access Jenkins
 
-Start a port-forward:
+Start a restartable port-forward:
 
 ```bash
-kubectl -n jenkins port-forward svc/jenkins 8080:8080
+./scripts/jenkins-port-forward.sh
 ```
+
+This wrapper runs `kubectl -n jenkins port-forward svc/jenkins 8080:8080` in a loop and restarts it if Jenkins restarts or the port-forward exits.
 
 Open:
 
@@ -198,10 +200,10 @@ python-vault-lab/Jenkinsfile
 
 Create a Jenkins Pipeline job:
 
-1. Start a Jenkins port-forward from your terminal:
+1. Start a restartable Jenkins port-forward from your terminal:
 
 ```bash
-kubectl -n jenkins port-forward svc/jenkins 8080:8080
+./scripts/jenkins-port-forward.sh
 ```
 
 2. Open the Jenkins GUI in your browser:
