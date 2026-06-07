@@ -196,31 +196,50 @@ python-vault-lab/Jenkinsfile
 
 Create a Jenkins Pipeline job:
 
-1. Open Jenkins.
-2. Select `New Item`.
-3. Name it `python-vault-lab`.
-4. Select `Pipeline`.
-5. Under `Definition`, select `Pipeline script from SCM`.
-6. Select `Git`.
-7. Repository URL:
+1. Start a Jenkins port-forward from your terminal:
+
+```bash
+kubectl -n jenkins port-forward svc/jenkins 8080:8080
+```
+
+2. Open the Jenkins GUI in your browser:
+
+```text
+http://127.0.0.1:8080
+```
+
+3. Sign in with username `admin`.
+4. Retrieve the admin password if needed:
+
+```bash
+kubectl exec --namespace jenkins svc/jenkins -c jenkins -- \
+  /bin/cat /run/secrets/additional/chart-admin-password
+```
+
+5. Select `New Item`.
+6. Name it `python-vault-lab`.
+7. Select `Pipeline`.
+8. Under `Definition`, select `Pipeline script from SCM`.
+9. Select `Git`.
+10. Repository URL:
 
 ```text
 git@github.com:xaviervincent11/jenkins-vault-helm-lab.git
 ```
 
-8. Branch specifier:
+11. Branch specifier:
 
 ```text
 */main
 ```
 
-9. Script path:
+12. Script path:
 
 ```text
 python-vault-lab/Jenkinsfile
 ```
 
-10. Save and run `Build Now`.
+13. Save and run `Build Now`.
 
 The pipeline should:
 
