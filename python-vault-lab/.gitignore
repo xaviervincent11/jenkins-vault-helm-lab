@@ -1,0 +1,6 @@
+.db_user
+.db_password
+__pycache__/
+*.py[cod]
+.venv/
+

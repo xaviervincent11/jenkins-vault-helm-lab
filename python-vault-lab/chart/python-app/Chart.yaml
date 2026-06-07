@@ -1,0 +1,7 @@
+apiVersion: v2
+name: python-app
+description: Lab app deployed by Jenkins with secrets from Vault
+type: application
+version: 0.1.0
+appVersion: "v1"
+
