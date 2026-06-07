@@ -48,34 +48,38 @@ spec:
 
     stage('Read secrets from Vault') {
       steps {
-        sh '''
-          set +x
-          JWT="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
-          VAULT_TOKEN="$(vault write -field=token auth/kubernetes/login role=jenkins jwt="$JWT")"
-          export VAULT_TOKEN
+        dir('python-vault-lab') {
+          sh '''
+            set +x
+            JWT="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
+            VAULT_TOKEN="$(vault write -field=token auth/kubernetes/login role=jenkins jwt="$JWT")"
+            export VAULT_TOKEN
 
-          vault kv get -field=db_user secret/python-app | tr -d '\\n' > .db_user
-          vault kv get -field=db_password secret/python-app | tr -d '\\n' > .db_password
-          chmod 600 .db_user .db_password
-          set -x
+            vault kv get -field=db_user secret/python-app | tr -d '\\n' > .db_user
+            vault kv get -field=db_password secret/python-app | tr -d '\\n' > .db_password
+            chmod 600 .db_user .db_password
+            set -x
 
-          echo "Secrets fetched from Vault and written to temporary files for Helm."
-        '''
+            echo "Secrets fetched from Vault and written to temporary files for Helm."
+          '''
+        }
       }
     }
 
     stage('Deploy with Helm') {
       steps {
-        sh '''
-          set -eu
-          helm upgrade --install python-app ./chart/python-app \
-            --namespace "$APP_NAMESPACE" \
-            --create-namespace \
-            --set-file secrets.dbUser=.db_user \
-            --set-file secrets.dbPassword=.db_password
+        dir('python-vault-lab') {
+          sh '''
+            set -eu
+            helm upgrade --install python-app ./chart/python-app \
+              --namespace "$APP_NAMESPACE" \
+              --create-namespace \
+              --set-file secrets.dbUser=.db_user \
+              --set-file secrets.dbPassword=.db_password
 
-          kubectl -n "$APP_NAMESPACE" rollout status deploy/python-app --timeout=120s
-        '''
+            kubectl -n "$APP_NAMESPACE" rollout status deploy/python-app --timeout=120s
+          '''
+        }
       }
     }
 
@@ -97,8 +101,9 @@ spec:
 
   post {
     always {
-      sh 'rm -f .db_user .db_password'
+      dir('python-vault-lab') {
+        sh 'rm -f .db_user .db_password'
+      }
     }
   }
 }
-
